@@ -63,27 +63,21 @@ class GlobalShuffle:
         return self._permuteArr(imgArr, self.unpermuteVector)
     
     def permuteTensor(self, imgTensor):
+        return self._permuteTensor(imgTensor, self.permuteVector)
+    
+    def unPermuteTensor(self, imgTensor):
+        return self._permuteTensor(imgTensor, self.unpermuteVector)
+    
+    def _permuteTensor(self, imgTensor, givenPermuteVector):
         """Permutes RGB rank 3 image torch tensor
         Assumes dimensions: [channel, height, width]
         Does not permute channel"""
         imgDim = list(imgTensor.shape)
         if len(imgDim) != 3:
             raise ValueError(f"Expected to have tensor with 3 dimensions, got {len(imgDim)} dimensions instead.")
-        transposedImgTensor = imgTensor.unsqueeze(0).transpose(0,3).transpose(1,2)
-        permutedImgTensor = torch.Tensor(self.permuteArr(transposedImgTensor.data.numpy()))
-        permutedImgTensor = permutedImgTensor.unsqueeze(0).transpose(1,2).transpose(0,3).squeeze()
-        return permutedImgTensor
-    
-    def unPermuteTensor(self, imgTensor):
-        """Unpermutes RGB rank 3 image torch tensor
-        Assumes dimensions: [channel, height, width]
-        Does not permute channel"""
-        imgDim = list(imgTensor.shape)
-        if len(imgDim) != 3:
-            raise ValueError(f"Expected to have tensor with 3 dimensions, got {len(imgDim)} dimensions instead.")
-        transposedImgTensor = imgTensor.unsqueeze(0).transpose(0,3).transpose(1,2)
-        permutedImgTensor = torch.Tensor(self.unPermuteArr(transposedImgTensor.data.numpy()))
-        permutedImgTensor = permutedImgTensor.unsqueeze(0).transpose(1,2).transpose(0,3).squeeze()
+        flatImgTensor = imgTensor.permute(1,2,0).reshape((-1, imgDim[0]))
+        permutedImgTensor = flatImgTensor[givenPermuteVector]
+        permutedImgTensor = permutedImgTensor.reshape(imgDim[1], imgDim[2], imgDim[0]).permute(2, 0, 1)
         return permutedImgTensor
     
     def createUnPermuteData(self):
